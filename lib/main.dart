@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart'; 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'features/home/home_screen.dart';
-import 'core/services/auth_service.dart'; 
 import 'features/auth/login_screen.dart';
+import 'core/services/auth_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const EduverseApp());
+}
 
 class EduverseApp extends StatelessWidget {
   const EduverseApp({super.key});
@@ -17,7 +23,7 @@ class EduverseApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      // This "AuthWrapper" checks if you are logged in
+      // Check if user is logged in
       home: const AuthWrapper(),
     );
   }
@@ -31,11 +37,11 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: AuthService().authStateChanges,
       builder: (context, snapshot) {
-        // If we are logged in, go to Home
+        // If logged in, show Home
         if (snapshot.hasData) {
           return const HomeScreen();
         }
-        // Otherwise, show Login
+        // If not logged in, show Login
         return const LoginScreen();
       },
     );

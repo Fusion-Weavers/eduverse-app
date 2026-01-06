@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/services/auth_service.dart';
+import '../subjects/subjects_screen.dart'; // Ensure this import exists
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,11 +12,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  // These are temporary placeholders for your 3 main tabs
+  // List of tabs
   static const List<Widget> _pages = <Widget>[
-    Center(child: Text('Home Page\n(Search CTA will go here)', textAlign: TextAlign.center)),
-    Center(child: Text('Subjects Page\n(List of Topics)', textAlign: TextAlign.center)),
-    Center(child: Text('Profile Page\n(User Details)', textAlign: TextAlign.center)),
+    Center(child: Text('Home Dashboard\n(Recent Activity)')), // Index 0
+    SubjectsScreen(), 
+    Center(child: Text('Profile Page')), // Index 2
   ];
 
   void _onItemTapped(int index) {
@@ -23,13 +25,24 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Logout Function
+  void _handleLogout() {
+    AuthService().signOut();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Eduverse'), 
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+        title: const Text('Eduverse'),
+        actions: [
+          // 🔴 The New Logout Button
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: _handleLogout,
+          ),
+        ],
       ),
       body: _pages.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
