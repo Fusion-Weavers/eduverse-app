@@ -3,12 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Fetch all Subjects (Physics, Chemistry, etc.)
+  // FIX: Removed .orderBy('order') because your database doesn't have that field!
   Stream<QuerySnapshot> getSubjects() {
-    return _db.collection('subjects').orderBy('order').snapshots();
+    return _db.collection('subjects').snapshots();
   }
 
-  // Fetch Topics for a specific Subject (We will use this later)
+  // Fetch Topics (This was already correct)
   Stream<QuerySnapshot> getTopics(String subjectId) {
     return _db
         .collection('topics')

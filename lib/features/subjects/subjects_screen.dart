@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/services/database_service.dart';
+// 🔴 IMPORT THE TOPICS SCREEN
+import '../topics/topics_screen.dart'; 
 
 class SubjectsScreen extends StatelessWidget {
   const SubjectsScreen({super.key});
@@ -22,7 +24,7 @@ class SubjectsScreen extends StatelessWidget {
             return Center(child: Text("Error: ${snapshot.error}"));
           }
 
-          // 3. Empty State (If Suhani Di hasn't added data yet)
+          // 3. Empty State
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(
               child: Text("No subjects added yet.\n(Wait for Web Team)"),
@@ -51,9 +53,16 @@ class SubjectsScreen extends StatelessWidget {
                   subtitle: Text(data['description'] ?? 'No description'),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
-                    // We will add navigation to Topics later
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Topics list coming soon!")),
+                    // 🔴 NAVIGATION LOGIC ADDED HERE
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TopicsScreen(
+                          // Pass the Document ID (e.g. 'physics') so we can fetch its topics
+                          subjectId: subjects[index].id, 
+                          subjectName: data['name'] ?? 'Subject',
+                        ),
+                      ),
                     );
                   },
                 ),

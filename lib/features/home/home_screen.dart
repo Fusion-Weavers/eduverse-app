@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
-import '../subjects/subjects_screen.dart'; // Ensure this import exists
+import '../auth/login_screen.dart';
+import '../subjects/subjects_screen.dart';
+import '../favorites/favorites_screen.dart';
+import '../profile/profile_screen.dart';
+import 'home_dashboard.dart'; 
+import '../search/universal_search.dart'; 
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,57 +17,47 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  // List of tabs
-  static const List<Widget> _pages = <Widget>[
-    Center(child: Text('Home Dashboard\n(Recent Activity)')), // Index 0
-    SubjectsScreen(), 
-    Center(child: Text('Profile Page')), // Index 2
-  ];
-
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
   }
 
-  // Logout Function
-  void _handleLogout() {
-    AuthService().signOut();
+  // Function to switch to Subjects tab from Home
+  void _goToSubjectsTab() {
+    setState(() => _selectedIndex = 1);
   }
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      HomeDashboard(onNavigateToSubjects: _goToSubjectsTab), // Index 0
+      const SubjectsScreen(),                                // Index 1
+      const FavoritesScreen(),                               // Index 2
+      const ProfileScreen(),                                 // Index 3
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Eduverse'),
+        title: const Text("Eduverse"),
         actions: [
-          // 🔴 The New Logout Button
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: _handleLogout,
+            icon: const Icon(Icons.search),
+            onPressed: () {
+               // Now this works because we imported universal_search.dart
+               showSearch(context: context, delegate: UniversalSearch());
+            },
           ),
         ],
       ),
-      body: _pages.elementAt(_selectedIndex),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book),
-            label: 'Subjects',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+      body: pages[_selectedIndex],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.menu_book), label: 'Subjects'),
+          NavigationDestination(icon: Icon(Icons.favorite), label: 'Favorites'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
         ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.deepPurple,
-        onTap: _onItemTapped,
       ),
     );
   }
