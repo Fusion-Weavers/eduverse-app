@@ -22,7 +22,21 @@ class _LoginScreenState extends State<LoginScreen> {
   String _selectedRole = 'Student';
   String _selectedLanguage = 'English';
   final List<String> _roles = ['Student', 'Teacher', 'Parent'];
-  final List<String> _languages = ['English', 'Hindi', 'Bengali', 'Spanish'];
+  final List<String> _languages = [
+    'English', 
+    'Hindi', 
+    'Bengali', 
+    'Marathi', 
+    'Telugu', 
+    'Tamil', 
+    'Gujarati', 
+    'Kannada', 
+    'Malayalam', 
+    'Punjabi', 
+    'Urdu', 
+    'Odia',
+    'Bhojpuri'
+  ];
 
   Future<void> _submitForm() async {
     // 1. Reset Error & Start Loading

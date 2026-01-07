@@ -33,8 +33,22 @@ class ProfileScreen extends StatelessWidget {
       return const Center(child: Text("Please login first."));
     }
 
-    // 🔴 DEFINED LIST OF LANGUAGES
-    final List<String> languages = ['English', 'Hindi', 'Bengali', 'Spanish'];
+    // 🔴 FIXED: Defined the list here so the code can see it
+    final List<String> languages = [
+      'English', 
+      'Hindi', 
+      'Bengali', 
+      'Marathi', 
+      'Telugu', 
+      'Tamil', 
+      'Gujarati', 
+      'Kannada', 
+      'Malayalam', 
+      'Punjabi', 
+      'Urdu', 
+      'Odia',
+      'Bhojpuri'
+    ];
 
     return Scaffold(
       appBar: AppBar(title: const Text("My Profile"), elevation: 0),
@@ -58,7 +72,7 @@ class ProfileScreen extends StatelessWidget {
           // 🔴 SAFETY CHECK FOR LANGUAGE
           String currentLang = data['preferredLanguage'] ?? 'English';
           if (!languages.contains(currentLang)) {
-            currentLang = 'English'; // Fallback if DB has weird value like 'en'
+            currentLang = 'English'; // Fallback if DB has weird value like 'en' or 'Spanish'
           }
           
           // Stats Calculations
