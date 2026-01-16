@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart'; // Add this package
 import 'core/services/auth_service.dart';
 import 'features/auth/login_screen.dart';
-import 'features/home/home_screen.dart';
+import 'features/home/home_screen.dart'; // Ensure this points to your Tab controller
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,14 +16,45 @@ class EduverseApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🎨 DEFINING THE CALM LAVENDER THEME
+    final baseTextTheme = GoogleFonts.poppinsTextTheme();
+    
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Eduverse',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        // Soft Purple Palette
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF9575CD), // Soft Deep Purple
+          primary: const Color(0xFF9575CD),
+          secondary: const Color(0xFFD1C4E9), // Light Lavender
+          background: const Color(0xFFFBFBFF), // Ghost White
+          surface: Colors.white,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFFBFBFF),
+        textTheme: baseTextTheme.apply(
+          bodyColor: const Color(0xFF424242),
+          displayColor: const Color(0xFF311B92),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          titleTextStyle: TextStyle(color: Color(0xFF311B92), fontSize: 20, fontWeight: FontWeight.bold),
+          iconTheme: IconThemeData(color: Color(0xFF311B92)),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF9575CD),
+            foregroundColor: Colors.white,
+            elevation: 3,
+            shadowColor: const Color(0xFF9575CD).withOpacity(0.4),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          ),
+        ),
       ),
-      // This "Wrapper" decides which screen to show first
       home: const AuthWrapper(),
     );
   }
@@ -34,20 +66,14 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      // Listens to the User Login State
       stream: AuthService().authStateChanges,
       builder: (context, snapshot) {
-        // 1. Loading...
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
-
-        // 2. User is Logged In -> Show Home (Subjects)
         if (snapshot.hasData) {
           return const HomeScreen();
         }
-
-        // 3. User is Logged Out -> Show Login/Signup
         return const LoginScreen();
       },
     );

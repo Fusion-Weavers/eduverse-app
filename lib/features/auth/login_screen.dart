@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/auth_service.dart';
+import '../home/home_screen.dart'; // ✅ Import Home Screen
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,42 +20,21 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoginMode = true; 
   String? _errorMessage;
 
-  // Dropdown Values
   String _selectedRole = 'Student';
   String _selectedLanguage = 'English';
   final List<String> _roles = ['Student', 'Teacher', 'Parent'];
   final List<String> _languages = [
-    'English', 
-    'Hindi', 
-    'Bengali', 
-    'Marathi', 
-    'Telugu', 
-    'Tamil', 
-    'Gujarati', 
-    'Kannada', 
-    'Malayalam', 
-    'Punjabi', 
-    'Urdu', 
-    'Odia',
-    'Bhojpuri'
+    'English', 'Hindi', 'Bengali', 'Marathi', 'Telugu', 'Tamil', 
+    'Gujarati', 'Kannada', 'Malayalam', 'Punjabi', 'Urdu', 'Odia', 'Bhojpuri'
   ];
 
   Future<void> _submitForm() async {
-    // 1. Reset Error & Start Loading
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
+    setState(() { _isLoading = true; _errorMessage = null; });
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // 2. Basic Validation
     if (email.isEmpty || password.isEmpty) {
-      setState(() {
-        _errorMessage = "Please enter email and password.";
-        _isLoading = false;
-      });
+      setState(() { _errorMessage = "Please enter email and password."; _isLoading = false; });
       return;
     }
 
@@ -64,35 +45,25 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         // SIGN UP
         await _authService.signUp(
-          email: email, 
-          password: password,
-          role: _selectedRole,
-          language: _selectedLanguage,
+          email: email, password: password, role: _selectedRole, language: _selectedLanguage,
         );
       }
-      // If successful, the AuthWrapper in main.dart will automatically switch screens.
-      
+
+      // 🚀 FORCE NAVIGATION ON SUCCESS
+      // This ensures we never get stuck, even if the Auth Stream is slow.
+      if (mounted && FirebaseAuth.instance.currentUser != null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen()), 
+          (route) => false // Clears the back stack
+        );
+      }
+
     } on FirebaseAuthException catch (e) {
-      // 3. Catch Firebase Errors
-      String msg = "An error occurred.";
-      if (e.code == 'user-not-found') msg = "No user found with this email.";
-      else if (e.code == 'wrong-password') msg = "Wrong password.";
-      else if (e.code == 'invalid-credential') msg = "Invalid email or password.";
-      else if (e.code == 'email-already-in-use') msg = "Email already in use.";
-      else if (e.code == 'weak-password') msg = "Password is too weak.";
-      else msg = e.message ?? "Authentication failed.";
-
+      String msg = e.message ?? "Authentication failed.";
       setState(() => _errorMessage = msg);
-      
-      // Show SnackBar for better visibility
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: Colors.red),
-      );
-
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
     } catch (e) {
-      // 4. Catch Other Errors
       setState(() => _errorMessage = "Error: $e");
-      print("Login Error: $e"); // Print to console for debugging
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -101,81 +72,150 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isLoginMode ? "Login" : "Create Account")),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              const Icon(Icons.school, size: 80, color: Colors.deepPurple),
-              const SizedBox(height: 20),
-              Text(_isLoginMode ? "Welcome Back!" : "Join Eduverse", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 30),
-
-              // Email
-              TextField(
-                controller: _emailController, 
-                decoration: const InputDecoration(labelText: "Email", border: OutlineInputBorder(), prefixIcon: Icon(Icons.email))
-              ),
-              const SizedBox(height: 16),
-              
-              // Password
-              TextField(
-                controller: _passwordController, 
-                obscureText: true, 
-                decoration: const InputDecoration(labelText: "Password", border: OutlineInputBorder(), prefixIcon: Icon(Icons.lock))
-              ),
-              const SizedBox(height: 16),
-
-              // Sign Up Extras
-              if (!_isLoginMode) ...[
-                DropdownButtonFormField(
-                  value: _selectedRole,
-                  items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-                  onChanged: (val) => setState(() => _selectedRole = val!),
-                  decoration: const InputDecoration(labelText: "I am a...", border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField(
-                  value: _selectedLanguage,
-                  items: _languages.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
-                  onChanged: (val) => setState(() => _selectedLanguage = val!),
-                  decoration: const InputDecoration(labelText: "Preferred Language", border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 20),
-              ],
-
-              // Error Text
-              if (_errorMessage != null) 
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                ),
-
-              // Button
-              SizedBox(
-                width: double.infinity, 
-                height: 50, 
-                child: _isLoading 
-                  ? const Center(child: CircularProgressIndicator()) 
-                  : ElevatedButton(
-                      onPressed: _submitForm, 
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white), 
-                      child: Text(_isLoginMode ? "Login" : "Sign Up")
-                    )
-              ),
-              
-              // Toggle Login/Signup
-              TextButton(
-                onPressed: () => setState(() {
-                  _isLoginMode = !_isLoginMode;
-                  _errorMessage = null;
-                }), 
-                child: Text(_isLoginMode ? "Don't have an account? Sign Up" : "Already have an account? Login")
-              ),
-            ],
+      body: Container(
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          // 🟣 STUDENT VIBE GRADIENT
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF6A1B9A), Color(0xFF4A148C)], 
           ),
         ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 🎓 LOGO AREA
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))
+                    ],
+                  ),
+                  child: const Icon(Icons.rocket_launch_rounded, size: 50, color: Color(0xFF6A1B9A)),
+                ),
+                const SizedBox(height: 24),
+                
+                Text(
+                  "Eduverse",
+                  style: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5),
+                ),
+                Text(
+                  "Your Learning Journey Starts Here",
+                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
+                ),
+                const SizedBox(height: 40),
+
+                // ⬜ WHITE CARD CONTAINER
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 20, offset: const Offset(0, 8))
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        _isLoginMode ? "Welcome Back!" : "Join the Class!",
+                        style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF4A148C)),
+                      ),
+                      const SizedBox(height: 20),
+
+                      _buildInput(_emailController, "Email", Icons.email_rounded, false),
+                      const SizedBox(height: 16),
+                      _buildInput(_passwordController, "Password", Icons.lock_rounded, true),
+                      const SizedBox(height: 16),
+
+                      if (!_isLoginMode) ...[
+                        _buildDropdown("I am a...", _selectedRole, _roles, (v) => setState(() => _selectedRole = v!)),
+                        const SizedBox(height: 16),
+                        _buildDropdown("Preferred Language", _selectedLanguage, _languages, (v) => setState(() => _selectedLanguage = v!)),
+                        const SizedBox(height: 20),
+                      ],
+
+                      if (_errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(_errorMessage!, style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                        ),
+
+                      // 🚀 ACTION BUTTON
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: _submitForm,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF6F00), // Vibrant Orange Button
+                            foregroundColor: Colors.white,
+                            elevation: 5,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: _isLoading 
+                            ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                            : Text(_isLoginMode ? "Let's Go!" : "Sign Me Up!", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+                
+                // 🔄 TOGGLE TEXT
+                TextButton(
+                  onPressed: () => setState(() { _isLoginMode = !_isLoginMode; _errorMessage = null; }),
+                  child: Text(
+                    _isLoginMode ? "New Student? Create Account" : "Already have an account? Log In",
+                    style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInput(TextEditingController ctrl, String label, IconData icon, bool isPass) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TextField(
+        controller: ctrl,
+        obscureText: isPass,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: const Color(0xFF7B1FA2)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(String label, String val, List<String> items, Function(String?) changed) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(16)),
+      child: DropdownButtonFormField<String>(
+        value: val,
+        items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        onChanged: changed,
+        decoration: InputDecoration(labelText: label, border: InputBorder.none),
+        icon: const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFF7B1FA2)),
       ),
     );
   }

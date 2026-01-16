@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart'; // Ensure this is in pubspec
 import '../../core/services/database_service.dart';
-// 🔴 IMPORT THE TOPICS SCREEN
-import '../topics/topics_screen.dart'; 
+import '../topics/topics_screen.dart';
 
 class SubjectsScreen extends StatelessWidget {
   const SubjectsScreen({super.key});
@@ -10,61 +10,119 @@ class SubjectsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Browse Subjects")),
+      backgroundColor: const Color(0xFFF4F6F9), // Soft background
+      appBar: AppBar(
+        title: Text(
+          "Browse Subjects", 
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: const Color(0xFF4A148C))
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF4A148C)),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: DatabaseService().getSubjects(),
         builder: (context, snapshot) {
-          // 1. Loading State
+          // 1. Loading
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
           }
 
-          // 2. Error State
+          // 2. Error
           if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
           }
 
-          // 3. Empty State
+          // 3. Empty
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text("No subjects added yet.\n(Wait for Web Team)"),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.hourglass_empty_rounded, size: 60, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    "No subjects yet.\n(Check back later!)",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(color: Colors.grey[500], fontSize: 16),
+                  ),
+                ],
+              ),
             );
           }
 
-          // 4. Data List
           final subjects = snapshot.data!.docs;
 
+          // 4. Vibrant List
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             itemCount: subjects.length,
             itemBuilder: (context, index) {
               final data = subjects[index].data() as Map<String, dynamic>;
               
-              return Card(
-                elevation: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: const Icon(Icons.menu_book, color: Colors.deepPurple, size: 40),
-                  title: Text(
-                    data['name'] ?? 'Unnamed Subject', 
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              // Fun gradients for cards
+              final List<List<Color>> gradients = [
+                [const Color(0xFF7E57C2), const Color(0xFF5E35B1)], // Purple
+                [const Color(0xFF42A5F5), const Color(0xFF1976D2)], // Blue
+                [const Color(0xFFEF5350), const Color(0xFFC62828)], // Red
+                [const Color(0xFF66BB6A), const Color(0xFF2E7D32)], // Green
+              ];
+              final gradient = gradients[index % gradients.length];
+
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TopicsScreen(
+                        subjectId: subjects[index].id, 
+                        subjectName: data['name'] ?? 'Subject',
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(color: gradient[0].withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))
+                    ],
                   ),
-                  subtitle: Text(data['description'] ?? 'No description'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () {
-                    // 🔴 NAVIGATION LOGIC ADDED HERE
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TopicsScreen(
-                          // Pass the Document ID (e.g. 'physics') so we can fetch its topics
-                          subjectId: subjects[index].id, 
-                          subjectName: data['name'] ?? 'Subject',
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.menu_book_rounded, color: Colors.white, size: 30),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              data['name'] ?? 'Unnamed Subject', 
+                              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              data['description'] ?? 'Tap to start learning',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  },
+                      const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 18),
+                    ],
+                  ),
                 ),
               );
             },

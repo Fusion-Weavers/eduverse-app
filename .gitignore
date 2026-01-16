@@ -48,3 +48,5 @@ Thumbs.db
 # Prevent uploading API keys to GitHub
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
+
+lib/api_key.dart

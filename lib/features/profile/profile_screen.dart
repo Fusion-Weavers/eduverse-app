@@ -1,27 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/auth_service.dart';
 import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  // Helper to format Timestamp to String
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return "Unknown";
     DateTime date = timestamp.toDate();
     return "${date.day}/${date.month}/${date.year}"; 
   }
 
-  // Update Language in Database
   void _updateLanguage(String? newValue) {
     if (newValue == null) return;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
-      FirebaseFirestore.instance.collection('users').doc(uid).update({
-        'preferredLanguage': newValue,
-      });
+      FirebaseFirestore.instance.collection('users').doc(uid).update({'preferredLanguage': newValue});
     }
   }
 
@@ -29,29 +26,15 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) {
-      return const Center(child: Text("Please login first."));
-    }
+    if (user == null) return const Center(child: Text("Please login first."));
 
-    // 🔴 FIXED: Defined the list here so the code can see it
     final List<String> languages = [
-      'English', 
-      'Hindi', 
-      'Bengali', 
-      'Marathi', 
-      'Telugu', 
-      'Tamil', 
-      'Gujarati', 
-      'Kannada', 
-      'Malayalam', 
-      'Punjabi', 
-      'Urdu', 
-      'Odia',
-      'Bhojpuri'
+      'English', 'Hindi', 'Bengali', 'Marathi', 'Telugu', 'Tamil', 
+      'Gujarati', 'Kannada', 'Malayalam', 'Punjabi', 'Urdu', 'Odia', 'Bhojpuri'
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("My Profile"), elevation: 0),
+      backgroundColor: const Color(0xFFF4F6F9),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
         builder: (context, snapshot) {
@@ -63,123 +46,159 @@ class ProfileScreen extends StatelessWidget {
             return const Center(child: Text("User data not found."));
           }
 
-          // 1. EXTRACT DATA
           final data = snapshot.data!.data() as Map<String, dynamic>;
           final String role = data['role'] ?? 'Student';
           final String email = data['email'] ?? user.email ?? 'No Email';
           final Timestamp? joinedAt = data['createdAt'] as Timestamp?;
           
-          // 🔴 SAFETY CHECK FOR LANGUAGE
           String currentLang = data['preferredLanguage'] ?? 'English';
-          if (!languages.contains(currentLang)) {
-            currentLang = 'English'; // Fallback if DB has weird value like 'en' or 'Spanish'
-          }
+          if (!languages.contains(currentLang)) currentLang = 'English';
           
-          // Stats Calculations
-          final List favTopics = data['favoriteTopics'] ?? [];
-          final List favConcepts = data['favoriteConcepts'] ?? [];
-          final int totalFavs = favTopics.length + favConcepts.length;
+          // 📊 RESTORED STATS LOGIC
           final int topicsViewed = data['topicsViewed'] ?? 0;
           final int conceptsRead = data['conceptsRead'] ?? 0;
           final int minutesRead = data['minutesRead'] ?? 0;
+          
+          // ❤️ RESTORED FAVORITES COUNT
+          final List favTopics = data['favoriteTopics'] ?? [];
+          final List favConcepts = data['favoriteConcepts'] ?? [];
+          final int totalFavs = favTopics.length + favConcepts.length;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // 👤 PROFILE HEADER
-                const CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.deepPurple,
-                  child: Icon(Icons.person, size: 50, color: Colors.white),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  email,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Chip(
-                  label: Text(role.toUpperCase()),
-                  backgroundColor: Colors.deepPurple.shade50,
-                  labelStyle: const TextStyle(color: Colors.deepPurple, fontSize: 12),
-                ),
-                const SizedBox(height: 24),
-
-                // 📊 LEARNING STATISTICS (Grid)
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text("Learning Statistics", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(height: 12),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.5,
-                  children: [
-                    _buildStatCard("Topics Viewed", "$topicsViewed", Icons.visibility, Colors.blue),
-                    _buildStatCard("Concepts Read", "$conceptsRead", Icons.auto_stories, Colors.orange),
-                    _buildStatCard("Mins Read", "$minutesRead", Icons.timer, Colors.green),
-                    _buildStatCard("Favorites", "$totalFavs", Icons.favorite, Colors.red),
-                  ],
-                ),
-                const SizedBox(height: 30),
-
-                // ⚙️ ACCOUNT DETAILS
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text("Account Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(height: 10),
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                // 🟣 CURVED HEADER
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF7E57C2), Color(0xFF512DA8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(40),
+                      bottomRight: Radius.circular(40),
+                    ),
+                  ),
                   child: Column(
                     children: [
-                      ListTile(
-                        leading: const Icon(Icons.calendar_today, color: Colors.deepPurple),
-                        title: const Text("Joining Date"),
-                        trailing: Text(_formatDate(joinedAt), style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.2)),
+                        child: const CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.white,
+                          child: Icon(Icons.person_rounded, size: 60, color: Color(0xFF512DA8)),
+                        ),
                       ),
-                      const Divider(),
-                      // 🌍 LANGUAGE DROPDOWN
-                      ListTile(
-                        leading: const Icon(Icons.language, color: Colors.deepPurple),
-                        title: const Text("Preferred Language"),
-                        trailing: DropdownButton<String>(
-                          value: currentLang,
-                          underline: const SizedBox(),
-                          items: languages
-                              .map((lang) => DropdownMenuItem(value: lang, child: Text(lang)))
-                              .toList(),
-                          onChanged: _updateLanguage,
+                      const SizedBox(height: 16),
+                      Text(
+                        email.split('@')[0],
+                        style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          role.toUpperCase(),
+                          style: GoogleFonts.poppins(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600, letterSpacing: 1.2),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 30),
 
-                // 🚪 LOGOUT BUTTON
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade50,
-                      foregroundColor: Colors.red,
-                      elevation: 0,
-                    ),
-                    icon: const Icon(Icons.logout),
-                    label: const Text("Log Out"),
-                    onPressed: () {
-                      AuthService().signOut();
-                      Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                          (route) => false);
-                    },
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 📊 STATS GRID (2x2 Layout)
+                      Text("Your Progress", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                      const SizedBox(height: 16),
+                      
+                      Row(
+                        children: [
+                          Expanded(child: _buildStatCard("Topics", "$topicsViewed", Icons.library_books_rounded, Colors.blue)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildStatCard("Concepts", "$conceptsRead", Icons.lightbulb_rounded, Colors.orange)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(child: _buildStatCard("Mins Read", "$minutesRead", Icons.timer_rounded, Colors.green)),
+                          const SizedBox(width: 16),
+                          // ❤️ FAVORITES CARD IS BACK
+                          Expanded(child: _buildStatCard("Favorites", "$totalFavs", Icons.favorite_rounded, Colors.red)),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 30),
+
+                      // ⚙️ SETTINGS CARD
+                      Text("Settings", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                      const SizedBox(height: 16),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
+                        ),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.calendar_today_rounded, color: Colors.purple),
+                              title: Text("Joined On", style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                              trailing: Text(_formatDate(joinedAt), style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.grey[600])),
+                            ),
+                            const Divider(height: 1),
+                            ListTile(
+                              leading: const Icon(Icons.translate_rounded, color: Colors.purple),
+                              title: Text("Language", style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                              trailing: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: currentLang,
+                                  icon: const Icon(Icons.arrow_drop_down_rounded, color: Colors.purple),
+                                  style: GoogleFonts.poppins(color: Colors.purple, fontWeight: FontWeight.bold),
+                                  items: languages.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
+                                  onChanged: _updateLanguage,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      // 🚪 LOGOUT
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFFEBEE),
+                            foregroundColor: Colors.red,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          icon: const Icon(Icons.logout_rounded),
+                          label: Text("Log Out", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                          onPressed: () {
+                            AuthService().signOut();
+                            Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                (route) => false);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
               ],
@@ -190,26 +209,27 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // 🎨 Helper Widget for Stat Cards
-  Widget _buildStatCard(String title, String count, IconData icon, Color color) {
+  Widget _buildStatCard(String label, String count, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            count,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 24),
           ),
-          const SizedBox(height: 4),
-          Text(title, style: TextStyle(fontSize: 12, color: color.withOpacity(0.8))),
+          const SizedBox(height: 12),
+          Text(count, style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)),
+          Text(label, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500])),
         ],
       ),
     );

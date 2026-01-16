@@ -1,7 +1,8 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
+import '../../api_key.dart';
 
 class TranslationService {
-  static const String _apiKey = "AIzaSyB8sFQfN9chcscDciwo6ajaFgnrrESO5Jw";
+  static const String _apiKey = geminiApiKey;
 
   Future<Map<String, String>> translateContent({
     required String title,
@@ -13,10 +14,6 @@ class TranslationService {
       return {'title': title, 'body': body, 'summary': summary};
     }
 
-    // 🛡️ 2026 MODEL LIST
-    // 1. Gemini 2.5 Flash (Primary - Rizwan's Choice)
-    // 2. Gemini 2.0 Flash (Backup)
-    // 3. Gemini Pro (Auto-resolves to latest stable)
     final modelsToTry = [
       'gemini-2.5-flash', 
       'gemini-2.0-flash', 

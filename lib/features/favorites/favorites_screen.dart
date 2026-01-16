@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart'; // Ensure imported
 import '../../core/services/user_service.dart';
 import '../../core/widgets/favorite_button.dart';
 import '../concepts/concept_detail_screen.dart';
@@ -13,13 +14,29 @@ class FavoritesScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: const Color(0xFFF4F6F9),
         appBar: AppBar(
-          title: const Text("My Favorites"),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: "Topics"),
-              Tab(text: "Concepts"),
-            ],
+          title: Text("My Collection", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
+          backgroundColor: const Color(0xFF6A1B9A),
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: const IconThemeData(color: Colors.white),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: Container(
+              color: Colors.white,
+              child: TabBar(
+                labelColor: const Color(0xFF6A1B9A),
+                unselectedLabelColor: Colors.grey,
+                labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                indicatorColor: const Color(0xFF6A1B9A),
+                indicatorWeight: 3,
+                tabs: const [
+                  Tab(text: "Saved Topics"),
+                  Tab(text: "Saved Concepts"),
+                ],
+              ),
+            ),
           ),
         ),
         body: const TabBarView(
@@ -47,7 +64,7 @@ class _FavoritesList extends StatelessWidget {
       stream: UserService().getUserStream(),
       builder: (context, userSnapshot) {
         if (userSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
         }
 
         // 1. Get List of IDs from User Profile
@@ -55,7 +72,16 @@ class _FavoritesList extends StatelessWidget {
         final List<dynamic> favoriteIds = userData?[userField] ?? [];
 
         if (favoriteIds.isEmpty) {
-          return Center(child: Text("No favorites in $collection yet."));
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.favorite_border_rounded, size: 60, color: Colors.grey[300]),
+                const SizedBox(height: 16),
+                Text("No favorites yet.", style: GoogleFonts.poppins(color: Colors.grey[500], fontSize: 16)),
+              ],
+            ),
+          );
         }
 
         // 2. Fetch the actual items from the collection
@@ -69,31 +95,44 @@ class _FavoritesList extends StatelessWidget {
               return favoriteIds.contains(doc.id);
             }).toList();
 
-            if (docs.isEmpty) return const Center(child: Text("Items removed from database."));
+            if (docs.isEmpty) return Center(child: Text("Items removed from database.", style: GoogleFonts.poppins()));
 
             return ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               itemCount: docs.length,
               itemBuilder: (context, index) {
                 final data = docs[index].data() as Map<String, dynamic>;
                 
-                // Handle different field names
                 final name = data['name'] ?? data['title'] ?? 'Untitled';
+                final isTopic = collection == 'topics';
 
-                return Card(
+                return Container(
                   margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                  ),
                   child: ListTile(
-                    leading: Icon(
-                      collection == 'topics' ? Icons.library_books : Icons.lightbulb,
-                      color: Colors.deepPurple,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isTopic ? Colors.blue.shade50 : Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        isTopic ? Icons.library_books_rounded : Icons.lightbulb_rounded,
+                        color: isTopic ? Colors.blue : Colors.amber,
+                        size: 24,
+                      ),
                     ),
-                    title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(name, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
                     trailing: FavoriteButton(
                       itemId: docs[index].id, 
-                      type: userField, // Keeps the heart red/grey
+                      type: userField, 
                     ),
                     onTap: () {
-                      // Navigate correctly based on what it is
                       if (collection == 'topics') {
                         Navigator.push(context, MaterialPageRoute(
                           builder: (_) => ConceptsScreen(topicId: docs[index].id, topicName: name)
