@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/auth_service.dart';
-import '../home/home_screen.dart'; // ✅ Import Home Screen
+import '../../core/services/ui_translation_service.dart'; // ✅ Import Translation
+import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,21 +41,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       if (_isLoginMode) {
-        // LOGIN
         await _authService.signIn(email: email, password: password);
       } else {
-        // SIGN UP
         await _authService.signUp(
           email: email, password: password, role: _selectedRole, language: _selectedLanguage,
         );
       }
-
-      // 🚀 FORCE NAVIGATION ON SUCCESS
-      // This ensures we never get stuck, even if the Auth Stream is slow.
+      
       if (mounted && FirebaseAuth.instance.currentUser != null) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const HomeScreen()), 
-          (route) => false // Clears the back stack
+          (route) => false
         );
       }
 
@@ -71,11 +68,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final ui = UiTranslationService(); // ✅ Translation Helper
+
     return Scaffold(
       body: Container(
         height: double.infinity,
         decoration: const BoxDecoration(
-          // 🟣 STUDENT VIBE GRADIENT
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -88,7 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 🎓 LOGO AREA
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -112,7 +109,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // ⬜ WHITE CARD CONTAINER
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -124,21 +120,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Column(
                     children: [
+                      // 🌍 TRANSLATED TITLE
                       Text(
-                        _isLoginMode ? "Welcome Back!" : "Join the Class!",
+                        _isLoginMode ? ui.translate('welcome_back') : ui.translate('join_class'),
                         style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF4A148C)),
                       ),
                       const SizedBox(height: 20),
 
-                      _buildInput(_emailController, "Email", Icons.email_rounded, false),
+                      // 🌍 TRANSLATED INPUTS
+                      _buildInput(_emailController, ui.translate('email'), Icons.email_rounded, false),
                       const SizedBox(height: 16),
-                      _buildInput(_passwordController, "Password", Icons.lock_rounded, true),
+                      _buildInput(_passwordController, ui.translate('password'), Icons.lock_rounded, true),
                       const SizedBox(height: 16),
 
                       if (!_isLoginMode) ...[
                         _buildDropdown("I am a...", _selectedRole, _roles, (v) => setState(() => _selectedRole = v!)),
                         const SizedBox(height: 16),
-                        _buildDropdown("Preferred Language", _selectedLanguage, _languages, (v) => setState(() => _selectedLanguage = v!)),
+                        _buildDropdown(ui.translate('language'), _selectedLanguage, _languages, (v) => setState(() => _selectedLanguage = v!)),
                         const SizedBox(height: 20),
                       ],
 
@@ -148,21 +146,23 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Text(_errorMessage!, style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
                         ),
 
-                      // 🚀 ACTION BUTTON
                       SizedBox(
                         width: double.infinity,
                         height: 55,
                         child: ElevatedButton(
                           onPressed: _submitForm,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF6F00), // Vibrant Orange Button
+                            backgroundColor: const Color(0xFFFF6F00),
                             foregroundColor: Colors.white,
                             elevation: 5,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: _isLoading 
                             ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-                            : Text(_isLoginMode ? "Let's Go!" : "Sign Me Up!", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold)),
+                            : Text(
+                                _isLoginMode ? ui.translate('login') : ui.translate('signup'), // 🌍 TRANSLATED BUTTON
+                                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold)
+                              ),
                         ),
                       ),
                     ],
@@ -171,7 +171,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
                 
-                // 🔄 TOGGLE TEXT
                 TextButton(
                   onPressed: () => setState(() { _isLoginMode = !_isLoginMode; _errorMessage = null; }),
                   child: Text(
@@ -189,10 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildInput(TextEditingController ctrl, String label, IconData icon, bool isPass) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(16)),
       child: TextField(
         controller: ctrl,
         obscureText: isPass,

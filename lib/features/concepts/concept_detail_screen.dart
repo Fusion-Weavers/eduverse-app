@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart'; // Make sure this is imported
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/translation_service.dart';
+import '../../core/services/ui_translation_service.dart'; // ✅ Import
 import 'ar_viewer_screen.dart';
 
 class ConceptDetailScreen extends StatefulWidget {
@@ -58,6 +59,11 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
 
   Future<void> _handleLanguageChange(String? newLang) async {
     if (newLang == null) return;
+    
+    // 1. Update UI Language (Static labels)
+    UiTranslationService().changeLanguage(newLang);
+    
+    // 2. Update Content Language (AI Translation)
     setState(() { _selectedLanguage = newLang; _isTranslating = true; });
 
     if (newLang == 'English') {
@@ -72,17 +78,16 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final ui = UiTranslationService(); // ✅ Helper
     final data = widget.data;
     final modelUrl = data['modelUrl'];
     final bool hasArModel = modelUrl != null && modelUrl.isNotEmpty;
     
-    // Arrays
     final content = data['content'] is Map ? data['content'] as Map<String, dynamic> : {};
     final en = content['en'] is Map ? content['en'] as Map<String, dynamic> : {};
     final examples = (content['examples'] ?? en['examples'] ?? data['examples'] ?? []) as List<dynamic>;
     final images = (content['images'] ?? en['images'] ?? data['images'] ?? []) as List<dynamic>;
 
-    // 🟢 SAFE STRINGS
     final String difficultyStr = (data['difficulty'] ?? 'General').toString();
     final String timeStr = (data['estimatedReadTime'] ?? '5m').toString();
 
@@ -91,12 +96,14 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
       body: _isTranslating 
         ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             const CircularProgressIndicator(color: Colors.orange), const SizedBox(height: 16),
-            Text("Magic Happening...", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.deepPurple))
+            Text(
+              ui.translate('magic_loading'), // 🌍 TRANSLATED
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.deepPurple)
+            )
           ]))
-        : CustomScrollView( // Using Slivers for a fancy scrolling header
+        : CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // 🟣 FANCY APP BAR
               SliverAppBar(
                 expandedHeight: 140.0,
                 floating: false,
@@ -141,14 +148,12 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
                 ],
               ),
 
-              // 📄 CONTENT BODY
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 🏷️ BUBBLE TAGS
                       Row(children: [
                         _buildBubbleTag(Icons.speed_rounded, difficultyStr, Colors.orange),
                         const SizedBox(width: 10),
@@ -156,7 +161,6 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
                       ]),
                       const SizedBox(height: 24),
 
-                      // 👓 AR BUTTON (Super Button)
                       if (hasArModel) ...[
                         GestureDetector(
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ArViewerScreen(modelUrl: modelUrl!, title: _originalTitle))),
@@ -165,7 +169,7 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
                             margin: const EdgeInsets.only(bottom: 24),
                             padding: const EdgeInsets.symmetric(vertical: 20),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(colors: [Color(0xFF00E676), Color(0xFF00C853)]), // Bright Green
+                              gradient: const LinearGradient(colors: [Color(0xFF00E676), Color(0xFF00C853)]), 
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [BoxShadow(color: const Color(0xFF00E676).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 6))],
                             ),
@@ -174,18 +178,20 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
                               children: [
                                 const Icon(Icons.view_in_ar_rounded, color: Colors.white, size: 28),
                                 const SizedBox(width: 12),
-                                Text("See it in 3D!", style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                Text(
+                                  ui.translate('see_3d'), // 🌍 TRANSLATED
+                                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)
+                                ),
                               ],
                             ),
                           ),
                         ),
                       ],
 
-                      // 📝 SUMMARY CARD
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF3E0), // Light Orange Bg
+                          color: const Color(0xFFFFF3E0), 
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: const Color(0xFFFFE0B2)),
                         ),
@@ -195,7 +201,10 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
                             Row(children: [
                               const Icon(Icons.bolt_rounded, color: Colors.orange, size: 28), 
                               const SizedBox(width: 8),
-                              Text("Fast Facts", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange[800]))
+                              Text(
+                                ui.translate('fast_facts'), // 🌍 TRANSLATED
+                                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange[800])
+                              )
                             ]),
                             const SizedBox(height: 12),
                             Text(_displaySummary, style: GoogleFonts.poppins(fontSize: 16, height: 1.6, color: Colors.brown[800])),
@@ -204,21 +213,25 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
                       ),
                       const SizedBox(height: 30),
 
-                      // 📖 BODY
-                      Text("Let's Learn!", style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)),
+                      Text(
+                        ui.translate('lets_learn'), // 🌍 TRANSLATED
+                        style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)
+                      ),
                       const SizedBox(height: 12),
                       Text(_displayBody, style: GoogleFonts.poppins(fontSize: 17, height: 1.8, color: Colors.grey[800])),
                       const SizedBox(height: 30),
 
-                      // 💡 EXAMPLES
                       if (examples.isNotEmpty) ...[
-                        Text("Real Examples", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        Text(
+                          ui.translate('examples'), // 🌍 TRANSLATED
+                          style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)
+                        ),
                         const SizedBox(height: 12),
                         ...examples.map((ex) => Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE3F2FD), // Light Blue
+                            color: const Color(0xFFE3F2FD), 
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
@@ -232,10 +245,12 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
                         )),
                       ],
 
-                      // 🖼️ VISUALS
                       if (images.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        Text("Visuals", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        Text(
+                          ui.translate('visuals'), // 🌍 TRANSLATED
+                          style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)
+                        ),
                         const SizedBox(height: 12),
                         SizedBox(
                           height: 220, 
@@ -274,10 +289,7 @@ class _ConceptDetailScreenState extends State<ConceptDetailScreen> {
   Widget _buildBubbleTag(IconData icon, String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1), 
-        borderRadius: BorderRadius.circular(30),
-      ),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(30)),
       child: Row(children: [
         Icon(icon, size: 18, color: color), const SizedBox(width: 8),
         Text(label, style: GoogleFonts.poppins(color: color, fontWeight: FontWeight.bold, fontSize: 13)),

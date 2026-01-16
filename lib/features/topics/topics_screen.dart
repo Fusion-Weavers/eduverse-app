@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart'; // Ensure this is in pubspec
+import 'package:google_fonts/google_fonts.dart';
+import '../../core/services/ui_translation_service.dart';
+import '../../core/widgets/favorite_button.dart';
 import '../concepts/concepts_screen.dart'; 
-import '../../core/widgets/favorite_button.dart'; 
 
 class TopicsScreen extends StatelessWidget {
   final String subjectId;
@@ -12,11 +13,16 @@ class TopicsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ui = UiTranslationService();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
       appBar: AppBar(
-        title: Text(subjectName, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF6A1B9A), // Deep Purple Header
+        title: Text(
+          subjectName, 
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)
+        ),
+        backgroundColor: const Color(0xFF6A1B9A), 
         iconTheme: const IconThemeData(color: Colors.white),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -39,7 +45,12 @@ class TopicsScreen extends StatelessWidget {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text("No topics found.", style: GoogleFonts.poppins(color: Colors.grey)));
+            return Center(
+              child: Text(
+                ui.translate('no_topics'), // Static Translate
+                style: GoogleFonts.poppins(color: Colors.grey)
+              ),
+            );
           }
 
           final topics = snapshot.data!.docs;
@@ -59,11 +70,10 @@ class TopicsScreen extends StatelessWidget {
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  // 🟣 Number Bubble
                   leading: Container(
                     width: 40, height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEDE7F6), // Light Lavender
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEDE7F6), 
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -83,30 +93,24 @@ class TopicsScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Row(
                       children: [
-                        Icon(Icons.speed_rounded, size: 14, color: Colors.orange[400]),
-                        const SizedBox(width: 4),
-                        Text(
-                          "${data['difficulty'] ?? 'General'}",
-                          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
-                        ),
-                        const SizedBox(width: 10),
-                        Icon(Icons.timer_rounded, size: 14, color: Colors.blue[400]),
-                        const SizedBox(width: 4),
-                        Text(
-                          "${data['estimatedTime'] ?? '10m'}",
-                          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                        Expanded( 
+                          child: Text(
+                            data['description'] ?? ui.translate('tap_explore'),
+                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500]),
+                            maxLines: 1, 
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
                   ),
 
-                  // ❤️ FAVORITE BUTTON IS BACK!
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       FavoriteButton(
                         itemId: topics[index].id,
-                        type: 'favoriteTopics', // Logic kept intact
+                        type: 'favoriteTopics', 
                       ),
                       const SizedBox(width: 12),
                       const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
